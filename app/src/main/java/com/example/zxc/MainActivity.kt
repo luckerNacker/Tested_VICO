@@ -11,7 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
@@ -74,8 +74,10 @@ fun Greeting() {
     val chunkedStops = stops.chunked(4)
     val chunkedData = passengerData.chunked(4)
 
-    val chartData = chunkedStops.mapIndexed { index, stopsChunk ->
-        ChartData(stopsChunk, chunkedData[index])
+    val chartData = remember {
+        chunkedStops.mapIndexed { index, stopsChunk ->
+            ChartData(stopsChunk, chunkedData[index])
+        }
     }
 
     LazyColumn(
@@ -85,7 +87,10 @@ fun Greeting() {
         contentPadding = PaddingValues(24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        items(chartData) { data ->
+        itemsIndexed(
+            items = chartData,
+            key = { index, _ -> index }
+        ) { _, data ->
             ChartSection(
                 stops = data.stops,
                 data = data.passengerData
@@ -101,9 +106,9 @@ data class ChartData(
 
 @Composable
 fun ChartSection(stops: List<String>, data: List<Int>) {
-    val modelProducer = remember { CartesianChartModelProducer() }
+    val modelProducer = remember(data) { CartesianChartModelProducer() }
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(data) {
         modelProducer.runTransaction {
             columnSeries {
                 series(data)
